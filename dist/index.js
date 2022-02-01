@@ -8309,11 +8309,13 @@ exports.handleAction = void 0;
 const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 function getOptions() {
+    const inAct = !!process.env.ACT;
     return {
         tag: core.getInput('tag', { required: true }),
         token: core.getInput('token', { required: true }),
         prefix: core.getInput('prefix', { required: true }).toLowerCase(),
         repo: github.context.repo,
+        workspace: `${process.env.GITHUB_WORKSPACE}${inAct ? '/action-dev-tagger' : ''}`,
     };
 }
 async function handleAction() {

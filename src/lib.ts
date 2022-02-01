@@ -9,14 +9,17 @@ type DevTaggerOptions = {
     owner: string;
     repo: string;
   };
+  workspace: string;
 };
 
 function getOptions(): DevTaggerOptions {
+  const inAct = !!process.env.ACT;
   return {
     tag: core.getInput('tag', { required: true }),
     token: core.getInput('token', { required: true }),
     prefix: core.getInput('prefix', { required: true }).toLowerCase(),
     repo: github.context.repo,
+    workspace: `${process.env.GITHUB_WORKSPACE}${inAct ? '/action-dev-tagger' : ''}`,
   };
 }
 
