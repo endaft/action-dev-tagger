@@ -1,0 +1,20 @@
+name: "action-dev-tagger"
+description: "A GitHub Action for easily manipulating tags, specifically used for pre-release tags that should move and follow the progress."
+branding:
+  icon: tag
+  color: blue
+
+inputs:
+  token:
+    description: "The GitHub Token to use for reference management in the repo."
+    required: true
+  prefix:
+    description: "The prefix to match against existing tags for deletion."
+    required: true
+  tag:
+    description: "The value of the new tag to be created."
+    required: true
+
+runs:
+  using: "node16"
+  main: "dist/index.js"
