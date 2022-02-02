@@ -8315,7 +8315,7 @@ function getOptions() {
         token: core.getInput('token', { required: true }),
         prefix: core.getInput('prefix', { required: true }).toLowerCase(),
         repo: github.context.repo,
-        workspace: `${process.env.GITHUB_WORKSPACE}${inAct ? '/action-dev-tagger' : ''}`,
+        workspace: `${process.env.GITHUB_WORKSPACE ?? ''}${inAct ? '/action-dev-tagger' : ''}`,
     };
 }
 async function handleAction() {
@@ -8325,10 +8325,12 @@ async function handleAction() {
         const ops = [];
         const resp = await client.rest.repos.listTags({ ...opts.repo });
         const tags = resp.data.filter((tag) => tag.name.toLowerCase().startsWith(opts.prefix));
+        core.info(`Deleting tags: ${tags.map((t) => t.name).join(', ')}`);
         for (const tag of tags) {
             ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: tag.name }));
         }
         await Promise.all(ops);
+        core.info(`Creating tag: ${opts.tag} @ ${github.context.sha}`);
         await client.rest.git.createTag({
             ...opts.repo,
             tag: opts.tag,
@@ -8336,6 +8338,7 @@ async function handleAction() {
             message: opts.tag,
             object: github.context.sha,
         });
+        core.info(`Creating ref: refs/heads/${opts.tag} @ ${github.context.sha}`);
         await client.rest.git.createRef({
             ...opts.repo,
             ref: `refs/heads/${opts.tag}`,
@@ -8343,7 +8346,7 @@ async function handleAction() {
         });
     }
     catch (error) {
-        core.setFailed(error.message);
+        core.setFailed(error);
     }
 }
 exports.handleAction = handleAction;
