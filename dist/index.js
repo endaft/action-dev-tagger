@@ -8323,21 +8323,13 @@ async function handleAction() {
         const opts = getOptions();
         const client = github.getOctokit(opts.token);
         const ops = [];
-        const resp = await client.rest.repos.listTags({ ...opts.repo });
-        const tags = resp.data.filter((tag) => tag.name.toLowerCase().startsWith(opts.prefix));
-        core.info(`Deleting tags: ${tags.map((t) => t.name).join(', ')}`);
+        const resp = await client.rest.git.listMatchingRefs({ ...opts.repo, ref: `tags/${opts.prefix}` });
+        const tags = resp.data.filter((tag) => tag.ref.split('/').pop().toLowerCase().startsWith(opts.prefix));
+        core.info(`Deleting tags: ${tags.map((t) => t.ref).join(', ')}`);
         for (const tag of tags) {
-            ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: tag.name }));
+            ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: tag.ref }));
         }
         await Promise.all(ops);
-        core.info(`Creating tag: ${opts.tag} @ ${github.context.sha}`);
-        await client.rest.git.createTag({
-            ...opts.repo,
-            tag: opts.tag,
-            type: 'commit',
-            message: opts.tag,
-            object: github.context.sha,
-        });
         core.info(`Creating ref: refs/tags/${opts.tag} @ ${github.context.sha}`);
         await client.rest.git.createRef({
             ...opts.repo,
