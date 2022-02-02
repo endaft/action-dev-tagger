@@ -8327,7 +8327,7 @@ async function handleAction() {
         const tags = resp.data.filter((tag) => tag.ref.split('/').pop().toLowerCase().startsWith(opts.prefix));
         core.info(`Deleting tags: ${tags.map((t) => t.ref).join(', ')}`);
         for (const tag of tags) {
-            ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: tag.ref }));
+            ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: tag.ref.split('/').slice(1).join('/') }));
         }
         await Promise.all(ops);
         core.info(`Creating ref: refs/tags/${opts.tag} @ ${github.context.sha}`);
