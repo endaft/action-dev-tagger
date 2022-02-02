@@ -29,11 +29,11 @@ export async function handleAction() {
     const client = github.getOctokit(opts.token);
 
     const ops: Promise<any>[] = [];
-    const resp = await client.rest.repos.listTags({ ...opts.repo });
-    const tags = resp.data.filter((tag) => tag.name.toLowerCase().startsWith(opts.prefix));
-    core.info(`Deleting tags: ${tags.map((t) => t.name).join(', ')}`);
+    const resp = await client.rest.git.listMatchingRefs({ ...opts.repo, ref: `tags/${opts.prefix}` });
+    const tags = resp.data.filter((tag) => tag.ref.split('/').pop().toLowerCase().startsWith(opts.prefix));
+    core.info(`Deleting tags: ${tags.map((t) => t.ref).join(', ')}`);
     for (const tag of tags) {
-      ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: `refs/tags/${tag.name}` }));
+      ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: tag.ref }));
     }
     await Promise.all(ops);
 

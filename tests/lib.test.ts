@@ -1,9 +1,11 @@
+import { randomInt, randomUUID } from 'crypto';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { handleAction } from '../src/lib';
 
 jest.mock('@actions/github', () => ({
   context: {
+    sha: randomUUID().replaceAll('-', ''),
     repo: {
       owner: 'test_user',
       repo: 'test_repo',
@@ -14,7 +16,7 @@ jest.mock('@actions/github', () => ({
 
 describe('Basic Tests', () => {
   it('Works As Expected', async () => {
-    const patch = Date.now();
+    const patch = randomInt(255);
     const outputs: Record<string, string> = {};
     const inputs: Record<string, string> = {
       token: '1234567890FAKETOKEN0987654321',
@@ -34,11 +36,17 @@ describe('Basic Tests', () => {
           rest: {
             git: {
               deleteRef: () => Promise.resolve(),
-              createTag: () => Promise.resolve(),
               createRef: () => Promise.resolve(),
-            } as any,
-            repos: {
-              listTags: () => Promise.resolve({ data: [{ name: `` }] }),
+              listMatchingRefs: () =>
+                Promise.resolve({
+                  data: [
+                    { ref: `refs/tags/v0.0.1-dev.1` },
+                    { ref: `refs/tags/v0.0.1-dev.2` },
+                    { ref: `refs/tags/v0.0.1-dev.3` },
+                    { ref: `refs/tags/v0.0.1-dev.4` },
+                    { ref: `refs/tags/v0.0.1-dev.5` },
+                  ],
+                }),
             } as any,
           } as any,
         } as any)
