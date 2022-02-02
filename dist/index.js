@@ -8338,10 +8338,10 @@ async function handleAction() {
             message: opts.tag,
             object: github.context.sha,
         });
-        core.info(`Creating ref: refs/heads/${opts.tag} @ ${github.context.sha}`);
+        core.info(`Creating ref: refs/tags/${opts.tag} @ ${github.context.sha}`);
         await client.rest.git.createRef({
             ...opts.repo,
-            ref: `refs/heads/${opts.tag}`,
+            ref: `refs/tags/${opts.tag}`,
             sha: github.context.sha,
         });
     }
