@@ -33,18 +33,9 @@ export async function handleAction() {
     const tags = resp.data.filter((tag) => tag.name.toLowerCase().startsWith(opts.prefix));
     core.info(`Deleting tags: ${tags.map((t) => t.name).join(', ')}`);
     for (const tag of tags) {
-      ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: tag.name }));
+      ops.push(client.rest.git.deleteRef({ ...opts.repo, ref: `refs/tags/${tag.name}` }));
     }
     await Promise.all(ops);
-
-    core.info(`Creating tag: ${opts.tag} @ ${github.context.sha}`);
-    await client.rest.git.createTag({
-      ...opts.repo,
-      tag: opts.tag,
-      type: 'commit',
-      message: opts.tag,
-      object: github.context.sha,
-    });
 
     core.info(`Creating ref: refs/tags/${opts.tag} @ ${github.context.sha}`);
     await client.rest.git.createRef({
