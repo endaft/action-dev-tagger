@@ -1,0 +1,66 @@
+name: Deployment
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/**"
+      - "jest.config.js"
+      - "package.json"
+      - "src/**"
+      - "tests/**"
+      - "tsconfig.json"
+      - "yarn.lock"
+
+permissions:
+  issues: write
+  contents: write
+  pull-requests: write
+  repository-projects: write
+
+jobs:
+  continuous-deployment:
+    name: Deployment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 👇 Checkout
+        uses: actions/checkout@v3
+
+      - name: 🤹 Instal Deps
+        run: yarn install
+
+      - name: 🧪 Test
+        run: yarn test
+
+      - name: 🧱 Build
+        run: |
+          yarn build
+          if [ "$(git status --porcelain)" != "" ]; then
+            echo "GIT_IS_DIRTY=true" >> $GITHUB_ENV
+          else
+            echo "GIT_IS_DIRTY=false" >> $GITHUB_ENV
+          fi
+
+      - name: 🏷️ Tag
+        if: env.GIT_IS_DIRTY == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh api repos/endaft/$(basename $PWD)/releases/latest --jq=.tag_name)
+          IFS=. read -r v1 v2 v3 <<< "${LATEST_TAG}"    # split into (integer) components
+          ((v3++))                                      # do the math
+          LATEST_TAG="${v1}.${v2}.${v3}"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "chore: updates dist js"
+          git tag "$LATEST_TAG" -m "Version $LATEST_TAG"
+          git tag latest -m "The latest version"
+
+      - name: 📌 Commit & Push
+        if: env.GIT_IS_DIRTY == 'true'
+        uses: GuillaumeFalourd/git-commit-push@v1.3
+        with:
+          tags: true
+          force: true
